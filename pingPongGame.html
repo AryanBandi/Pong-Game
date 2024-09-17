@@ -1,0 +1,236 @@
+<html>
+    <head>
+        <script>
+            window.onload = function() {
+                var canvas = document.getElementById('myCanvas');
+                var ctx = canvas.getContext('2d');             
+                
+                
+                //creating the user paddle 
+                ctx.fillStyle = 'white';
+                ctx.strokeStyle = 'black';
+                ctx.font = '60px serif';
+                var y = 200;
+                ctx.beginPath();
+                ctx.fillRect(30, y, 10, 60);
+
+                function userAnimation(event) {
+                    if (userScore != 5 && comScore != 5) {
+                        if (event.key === 'ArrowUp') {
+                            ctx.clearRect(30, y, 10, 400);
+                            y-=12;
+                            ctx.fillRect(30, y, 10, 60);
+                        } else if (event.key === 'ArrowDown') {
+                            ctx.clearRect(30, y, 10, 400);
+                            y+=12;
+                            ctx.fillRect(30, y, 10, 60);
+                        } else if (event.clientY != y && y > 0 && y < 340) {
+                            ctx.clearRect(30, y, 10, 400);
+                            y = event.clientY;
+                            ctx.fillRect(30, y, 10, 60);
+                        };
+
+                        if (y == 0) {
+                            ctx.clearRect(30, y, 10, 400);
+                            y = 1;
+                            ctx.fillRect(30, y, 10, 60);
+                        } else if (y > 339) {
+                            ctx.clearRect(30, y, 10, 400);
+                            y = 339;
+                            ctx.fillRect(30, y, 10, 60);
+                        }/* else {
+                            ctx.fillRect(30, y, 10, 60)
+                        } */
+                    };
+                };
+
+                document.addEventListener('keydown',  userAnimation);
+                document.addEventListener('mousemove', userAnimation);
+
+
+                //creating the AI paddle
+                var comY = 200;
+                ctx.beginPath();
+                ctx.fillRect(760, comY, 10, 60);
+
+                function comAnimation() {
+                    if (arcY < comY && arcY <= 765) {
+                        ctx.clearRect(760, y, 10, 400);
+                        comY-=1;
+                        ctx.beginPath();
+                        ctx.fillRect(760, comY, 10, 60);
+                        ctx.closePath();
+                    } else if (arcY > comY && arcY <= 765) {
+                        ctx.clearRect(760, y, 10, 400);
+                        comY+=1;
+                        ctx.beginPath();
+                        ctx.fillRect(760, comY, 10, 60);
+                        ctx.closePath();
+                    };
+
+                    //checking for collision with paddle
+                    if (arcX >= 763 && arcY >= comY && arcY <= comY + 60) {
+                        goingRight = false;
+                    };
+            
+                    //keeping the paddle on the canvas
+                    if (comY >= 340) {
+                        comY = 339;
+                    }
+                };
+                var comMove = setInterval(comAnimation, 5);
+
+
+                //creating the ball
+                let angleX;
+                let angleY;
+                let speedX = 10;
+                let speedY;
+                let arcX = 400;
+                let arcY = 200;
+                let goingDown;
+                let goingRight;
+                ctx.arc(arcX, arcY, 10, 0, 2 * Math.PI, false);
+                ctx.fill();
+
+                function randomDirection() {
+                    angleX = (Math.random() < .5) ? 5 : 795;
+
+                    angleY = Math.floor(Math.random() * 401);
+
+                    if (angleY > arcY) {
+                        speedY = Math.ceil((angleY - arcY)/speedX);
+                        goingDown = true;
+                    } else if (angleY < arcY) {
+                        speedY = Math.ceil((arcY - angleY)/speedX);
+                        goingDown = false;
+                    };
+                    if (angleX == 5) {
+                        goingRight = false;
+                    } else if (angleX == 795) {
+                        goingRight = true;
+                    };
+                };
+
+                randomDirection();
+                
+                function ballAnimation() {
+                    //checking for bounce
+                    if (arcY <= 5 || arcY >= canvas.height - 5) {
+                        if (goingDown == true) {
+                        goingDown = false;
+                        } else if (goingDown == false) {
+                            goingDown = true;
+                        };
+                    };
+
+                    //updating ball parameters
+                    if (goingDown == true) {
+                        arcY += speedY;
+                    } else if (goingDown == false) {
+                        arcY -= speedY;
+                    };
+
+                    if (goingRight == false) {
+                        arcX -= speedX;
+                    } else if (goingRight == true) {
+                        arcX += speedX;
+                    };
+
+                    //checking for collision with paddle
+                    if (arcX <= 47 && arcY >= y && arcY <= y + 60) {
+                        goingRight = true;
+                    };
+
+                    //filling other items and new ball
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.beginPath();
+                    ctx.fillText(userScore, 350, 50);
+                    ctx.fillText(comScore, 450, 50);
+                    ctx.fillRect(30, y, 10, 60);
+                    ctx.arc(arcX, arcY, 10, 0, 2*Math.PI, false);
+                    ctx.fillRect(760, comY, 10, 60);
+                    ctx.fill();
+                    ctx.closePath();
+                };
+
+                var ballMove = setInterval(ballAnimation, 40);
+
+
+                //creating the game variables
+                var gameOver = false;
+                var userScore = 0;
+                var comScore = 0;
+
+                function score() {
+                    if (arcX <= 5) {
+                        comScore++;
+                        reset();
+
+                    } else if (arcX >= canvas.width - 5) {
+                        userScore++;
+                        reset();
+                    };
+
+                    if (userScore == 5 || comScore == 5) {
+                        clearInterval(scoring);
+                        clearInterval(ballMove);
+                        clearInterval(comMove);
+
+                        if (comScore == 5) {
+
+                            ctx.fillText('YOU LOST', 270, 150);
+                        } else if (userScore == 5) {
+                            ctx.fillText('YOU WON', 300, 150);
+                        };
+                        ctx.closePath();
+                    };
+
+                };
+
+                var scoring = setInterval(score, 1);
+
+                function reset() {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.beginPath();
+                    ctx.fillText(userScore, 350, 50);
+                    ctx.fillText(comScore, 450, 50);
+                    ctx.closePath();
+                    
+                    //user paddle
+                    y = 200;
+                    ctx.beginPath();
+                    ctx.fillRect(30, y, 10, 60);
+
+                    //computer paddle
+                    comY = 200;
+                    clearInterval(comMove);
+                    ctx.beginPath();
+                    ctx.fillRect(760, comY, 10, 60);
+
+                    //ball
+                    clearInterval(ballMove);
+                    arcX = 400;
+                    arcY = 200;
+                    ctx.beginPath();
+                    ctx.arc(arcX, arcY, 10, 0, 2*Math.PI, false);
+                    ctx.fill();
+                };
+
+                function start() {
+                    comMove = setInterval(comAnimation, 5);
+                    randomDirection();
+                    ballMove = setInterval(ballAnimation, 40);
+                }
+
+                document.addEventListener('click', start);
+            };
+
+
+        </script>
+    </head>
+    <body>
+        <canvas id="myCanvas" width="800" height="400" style="background:#000000"></canvas>
+    
+    </body>
+</html>
